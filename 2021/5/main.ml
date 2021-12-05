@@ -6,9 +6,7 @@ type line = {source : coord; dest : coord; delta : coord}
 let iter_line ~(f : coord -> unit) (l : line) =
   let rec aux (cur : coord) =
     if Poly.(cur = l.dest) then f cur
-    else (
-      f cur; aux {x = cur.x + l.delta.x; y = cur.y + l.delta.y}
-    )
+    else (f cur; aux {x = cur.x + l.delta.x; y = cur.y + l.delta.y})
   in aux l.source
 
 let solve ~all_lines l =
