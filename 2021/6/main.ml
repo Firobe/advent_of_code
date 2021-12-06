@@ -6,14 +6,11 @@ let one_day l =
   Queue.set l 6 Z.(Queue.get l 6 + zeroes) ;
   l
 
-let rec n_days l n =
-  if n = 0 then l
-  else n_days (one_day l) (n - 1)
+let solve ~n l =
+  Fn.apply_n_times ~n one_day l |> Queue.fold ~init:Z.zero ~f:Z.add
 
-let count_all l = Queue.fold l ~init:Z.zero ~f:Z.add
-
-let solve1 l = (n_days (Queue.copy l) 80) |> count_all
-let solve2 l = (n_days (Queue.copy l) 256) |> count_all
+let solve1 l = solve ~n:80 (Queue.copy l)
+let solve2 l = solve ~n:256 (Queue.copy l)
 
 let convert_data (l : string list) : Z.t Queue.t =
   let l = List.hd_exn l |> String.split ~on:',' |> List.map ~f:Int.of_string in
