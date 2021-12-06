@@ -1,3 +1,3 @@
 (executable
  (name main)
- (libraries base stdio num))
+ (libraries base stdio zarith))
