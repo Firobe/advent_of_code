@@ -4,6 +4,9 @@ module Seg = struct
   type t = A | B | C | D | E | F | G
   let compare = Poly.compare
   let sexp_of_t _ = sexp_of_int 0
+  let of_char = function
+    | 'a' -> A | 'b' -> B | 'c' -> C | 'd' -> D | 'e' -> E
+    | 'f' -> F | 'g' -> G | _ -> assert false
 end
 module Seg_comparator = struct include Seg include Comparator.Make(Seg) end
 
@@ -84,23 +87,17 @@ let convert_int = List.foldi ~init:0 ~f:(fun n s d -> s + d * (10 ** (3 - n)))
 let solve1 = sum_map count_unique
 let solve2 = sum_map convert_int
 
-let seg_of_char = let open Seg in function
-  | 'a' -> A | 'b' -> B | 'c' -> C | 'd' -> D | 'e' -> E
-  | 'f' -> F | 'g' -> G | _ -> assert false
-
 let convert_data (l : string list) : entry list =
   let make_digit s =
-    s |> String.to_list |> List.map ~f:seg_of_char
+    s |> String.to_list |> List.map ~f:Seg.of_char
     |> Set.of_list (module Seg_comparator)
   in let make_entry s = match String.split ~on:'|' s with
       | [sequences ; outputs] -> 
         let split_digits_clean s =
           String.split s ~on:' ' |> List.filter ~f:(Fn.non String.is_empty)
-          |> List.map ~f:make_digit
-        in
-        let sequences = split_digits_clean sequences in
-        let outputs = split_digits_clean outputs in
-        {sequences; outputs}
+          |> List.map ~f:make_digit in
+        {sequences = split_digits_clean sequences;
+         outputs = split_digits_clean outputs}
       | _ -> assert false
   in List.map ~f:make_entry l
 
