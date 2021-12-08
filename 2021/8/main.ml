@@ -14,10 +14,6 @@ type entry = {
   outputs : digit list (* size 4 *)
 }
 
-let solve1 l =
-  let has_unique_length s = List.mem [2; 4 ; 3 ; 7] (Set.length s) ~equal in
-  List.sum (module Int) l ~f:(fun e -> List.count e.outputs ~f:has_unique_length)
-
 let segments : (int * digit) list = Seg.[
     [A; B; C; E; F; G];
     [C; F];
@@ -68,7 +64,7 @@ let try_conv table (l : digit list) =
     left, new_table
   | None -> failwith "Cannot progress"
 
-let read_output (l : entry) : int =
+let read_digits (l : entry) : int list =
   let init_table =
     let s = Set.of_list (module Seg_comparator) Seg.[A;B;C;D;E;F;G] in
     Map.of_alist_exn (module Seg_comparator)
@@ -80,10 +76,13 @@ let read_output (l : entry) : int =
     else conv_until_done table ambiguous
   in
   let conv_table = conv_until_done init_table l.sequences in
-  let digits = List.filter_map l.outputs ~f:(discriminate conv_table) in
-  List.foldi digits ~init:0 ~f:(fun n s d -> s + d * (10 ** (3 - n)))
+  List.filter_map l.outputs ~f:(discriminate conv_table)
 
-let solve2 l = List.sum (module Int) ~f:read_output l
+let sum_map f = List.sum (module Int) ~f:(fun x -> f (read_digits x))
+let count_unique = List.count ~f:(List.mem ~equal [1; 4; 7 ; 8])
+let convert_int = List.foldi ~init:0 ~f:(fun n s d -> s + d * (10 ** (3 - n)))
+let solve1 = sum_map count_unique
+let solve2 = sum_map convert_int
 
 let seg_of_char = let open Seg in function
   | 'a' -> A | 'b' -> B | 'c' -> C | 'd' -> D | 'e' -> E
