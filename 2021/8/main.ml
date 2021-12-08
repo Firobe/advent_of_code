@@ -7,7 +7,8 @@ module Seg = struct
 end
 module Seg_comparator = struct include Seg include Comparator.Make(Seg) end
 
-type digit = (Seg.t, Seg_comparator.comparator_witness) Set.t
+type digit = Set.M(Seg_comparator).t
+
 type entry = {
   sequences : digit list ; (* size 10 *)
   outputs : digit list (* size 4 *)
