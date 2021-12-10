@@ -6,10 +6,11 @@ let score1 = function
 let rec stack_of_line ?(stack=[]) = function
   | [] -> if List.is_empty stack then `Correct else `Incomplete stack
   | (symbol, `Open) :: t -> stack_of_line ~stack:(symbol :: stack) t
-  | (symbol, `Close) :: _ when List.is_empty stack -> `Corrupted symbol
-  | (symbol, `Close) :: _ when Poly.(symbol <> List.hd_exn stack) ->
-    `Corrupted symbol
-  | (_, `Close) :: t -> stack_of_line ~stack:(List.tl_exn stack) t
+  | (symbol, `Close) :: t -> begin match stack with
+      | [] -> `Corrupted symbol
+      | h :: _ when Poly.(symbol <> h) -> `Corrupted symbol
+      | _ :: t' -> stack_of_line ~stack:t' t
+    end
 
 let solve1 l =
   List.sum (module Int) l ~f:(fun l ->
