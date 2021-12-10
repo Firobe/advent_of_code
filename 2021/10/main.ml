@@ -22,14 +22,11 @@ let solve1 l =
 let score_sym = function
   | `Paren -> 1 | `Bracket -> 2 | `Brace -> 3 | `Chevron -> 4
 
-let rec score2 ?(score=0) = function
-  | [] -> score
-  | sym :: t -> score2 ~score:(score * 5 + (score_sym sym)) t
-
 let solve2 l = 
+  let add_score sc sy = sc * 5 + score_sym sy in
   let scores = List.filter_map l ~f:(fun l ->
       match stack_of_line l with
-      | `Incomplete s -> Some (score2 s)
+      | `Incomplete s -> Some (List.fold s ~f:add_score ~init:0)
       | _ -> None
     )
   |> List.sort ~compare in
