@@ -11,15 +11,12 @@ let fold coords (dir, v) =
 
 let print_paper coords =
   let xs, ys = List.unzip coords in
-  let max_x = List.max_elt xs ~compare |> Option.value_exn in
-  let max_y = List.max_elt ys ~compare |> Option.value_exn in
-  for y = 0 to max_y do
-    for x = 0 to max_x do
+  let get_max l = List.max_elt l ~compare |> Option.value_exn in
+  for y = 0 to get_max ys do
+    for x = 0 to get_max xs do
       if List.exists coords ~f:(Poly.equal (x, y)) then
-        Stdio.printf "#"
-      else Stdio.printf " "
-    done;
-    Stdio.printf "\n"
+        Stdio.printf "#" else Stdio.printf " "
+    done; Stdio.printf "\n"
   done
 
 let solve1 t = fold t.coords (List.hd_exn t.folds) |> List.length
@@ -30,8 +27,7 @@ let convert_data (l : string list) =
   let coords = List.map coords ~f:(fun s -> match String.split ~on:',' s with
       | [x; y] -> (Int.of_string x, Int.of_string y)
       | _ -> failwith "Wrong input")
-  in
-  let folds = List.tl_exn folds |> List.map ~f:(fun s ->
+  in let folds = List.tl_exn folds |> List.map ~f:(fun s ->
       Caml.Scanf.sscanf s "fold along %c=%d" (fun s v ->
           ((if Char.(s = 'x') then `Left else `Up), v)))
   in {coords; folds}
