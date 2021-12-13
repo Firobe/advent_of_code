@@ -4,8 +4,8 @@ type input = {coords : (int * int) list; folds : ([`Up | `Left] * int) list}
 
 let fold coords (dir, v) =
   let f ((x, y) as p) = match dir with
-    | `Up -> if y > v then (x, v - (y - v - 1) - 1) else p
-    | `Left -> if x > v then (v - (x - v - 1) - 1, y) else p
+    | `Up -> if y > v then (x, 2 * v - y) else p
+    | `Left -> if x > v then (2 * v - x, y) else p
 
   in List.map ~f coords |> List.dedup_and_sort ~compare:Poly.compare
 
