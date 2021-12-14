@@ -24,7 +24,6 @@ let new_pairs p i =
 
 (* Apply a step, only keeping track of pair and char frequencies *)
 let step rules (pm, fm) =
-  let remove_zeroes = Map.filter ~f:((<) 0) in
   let f ~key ~data ((pm, fm) as p) =
     match Map.find rules key with
     | None -> p
@@ -33,10 +32,8 @@ let step rules (pm, fm) =
       let pm =
         increase_map ~by:(-data) key pm
         |> increase_map ~by:data p1
-        |> increase_map ~by:data p2
-        |> remove_zeroes in
-      let fm = increase_map ~by:data insert fm |> remove_zeroes in
-      (pm, fm)
+        |> increase_map ~by:data p2 in
+      (pm, increase_map ~by:data insert fm)
   in Map.fold pm ~init:(pm, fm) ~f
 
 let solve n ((pm, fm), rules) =
