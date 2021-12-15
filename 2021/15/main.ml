@@ -1,13 +1,24 @@
 open Base
 
-module Pair (A : Comparable.S) (B : Comparable.S) = struct
+(* just an experiment *)
+module Pair
+    (A : sig
+       include Comparable.S
+       include Sexpable.S with type t := t
+     end)
+    (B : sig
+       include Comparable.S
+       include Sexpable.S with type t := t
+     end) = struct
   module O = struct
     type t = A.t * B.t
     let compare (a1,b1) (a2,b2) =
       let c = A.compare a1 a2 in if c = 0 then B.compare b1 b2 else c
+    let sexp_of_t (a, b) = Sexp.List [A.sexp_of_t a; B.sexp_of_t b]
   end
   include O
   include Comparable.Polymorphic_compare(O)
+  include Comparator.Make(O)
 end
 
 module PQ = Psq.Make(Pair(Int)(Int))(Int)
@@ -60,7 +71,7 @@ let convert_data (l : string list) : int array array =
 
 let main file =
   let input = Stdio.In_channel.read_lines file |> convert_data in
-  Stdio.printf "%s\n========\nPart 1 %d\nPart 2 %d\n" file
+  Stdio.printf "%s\n========\nPart 1 %d\nPart 2 %d\n%!" file
     (solve1 input) (solve2 input)
 
 let () = main "example" ; main "input"
