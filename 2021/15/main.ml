@@ -1,20 +1,21 @@
 open Base
 
+module type CS = sig
+  type t
+  include Comparable.S with type t := t
+  include Sexpable.S with type t := t
+end
+
 (* just an experiment *)
-module Pair
-    (A : sig
-       include Comparable.S
-       include Sexpable.S with type t := t
-     end)
-    (B : sig
-       include Comparable.S
-       include Sexpable.S with type t := t
-     end) = struct
+module Pair (A : CS) (B : CS) : CS with type t = A.t * B.t = struct
   module O = struct
     type t = A.t * B.t
     let compare (a1,b1) (a2,b2) =
       let c = A.compare a1 a2 in if c = 0 then B.compare b1 b2 else c
     let sexp_of_t (a, b) = Sexp.List [A.sexp_of_t a; B.sexp_of_t b]
+    let t_of_sexp = function 
+      | Sexp.List [a; b] -> (A.t_of_sexp a, B.t_of_sexp b)
+      | _ -> assert false
   end
   include O
   include Comparable.Make(O)
@@ -41,11 +42,9 @@ let shortest_path size (risk : int * int -> int) src dst =
           |> List.fold ~init:prio ~f:(fun p ((x,y) as n) ->
               let nw = weight + risk (x, y) in
               if Set.Poly.mem visited n then p
-              else PQ.update n (function
-                  | None -> Some nw
-                  | Some ew when ew > nw -> Some nw
-                  | Some x -> Some x
-                ) p
+              else PQ.update n
+                  Fn.(compose (compose Option.some (Int.min nw))
+                        (Option.value ~default:nw)) p
             )
         in aux visited prio
   in aux visited prio
@@ -56,12 +55,9 @@ let solve1 l =
   shortest_path len risk (0, 0) (len - 1, len - 1)
 
 let solve2 l =
-  let len = Array.length l * 5 in
-  let tile = Array.length l in
-  let risk (x, y) =
-    let orig = l.(y % tile).(x % tile) - 1 in
-    (orig + x / tile + y / tile) % 9 + 1
-  in
+  let t = Array.length l in
+  let len = t * 5 in
+  let risk (x, y) = (l.(y % t).(x % t) - 1 + x / t + y / t) % 9 + 1 in
   shortest_path len risk (0, 0) (len - 1, len - 1)
 
 let convert_data (l : string list) : int array array =
