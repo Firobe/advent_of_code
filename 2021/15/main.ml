@@ -1,23 +1,25 @@
 open Base
 
-module IntPair = struct
-  type t = int * int
-  let compare = Poly.compare
+module Pair (A : Comparable.S) (B : Comparable.S) = struct
+  module O = struct
+    type t = A.t * B.t
+    let compare (a1,b1) (a2,b2) =
+      let c = A.compare a1 a2 in if c = 0 then B.compare b1 b2 else c
+  end
+  include O
+  include Comparable.Polymorphic_compare(O)
 end
-module WeightAndPath = struct
-  type t = int * (IntPair.t list)
-  let compare a b = compare (fst a) (fst b)
-end
-module PQ = Psq.Make(IntPair)(WeightAndPath)
+
+module PQ = Psq.Make(Pair(Int)(Int))(Int)
 
 let shortest_path size (risk : int * int -> int) src dst =
-  let prio = PQ.sg src (0, [src]) in
+  let prio = PQ.sg src 0 in
   let visited = Set.Poly.empty in
   let rec aux visited prio =
     match PQ.pop prio with
     | None -> failwith "No path found"
-    | Some ((next, (weight, path)), prio) ->
-      if Poly.(next = dst) then (path, weight)
+    | Some ((next, weight), prio) ->
+      if Poly.(next = dst) then weight
       else
         let visited = Set.Poly.add visited next in
         let prio =
@@ -29,9 +31,9 @@ let shortest_path size (risk : int * int -> int) src dst =
               let nw = weight + risk (x, y) in
               if Set.Poly.mem visited n then p
               else PQ.update n (function
-                  | Some (ew, _) when ew > nw -> Some (nw, n :: path)
+                  | None -> Some nw
+                  | Some ew when ew > nw -> Some nw
                   | Some x -> Some x
-                  | None -> Some (nw, n :: path)
                 ) p
             )
         in aux visited prio
@@ -40,7 +42,7 @@ let shortest_path size (risk : int * int -> int) src dst =
 let solve1 l = 
   let len = Array.length l in
   let risk (x, y) = l.(y).(x) in
-  let (_, w) = shortest_path len risk (0, 0) (len - 1, len - 1) in w
+  shortest_path len risk (0, 0) (len - 1, len - 1)
 
 let solve2 l =
   let len = Array.length l * 5 in
@@ -49,7 +51,7 @@ let solve2 l =
     let orig = l.(y % tile).(x % tile) - 1 in
     (orig + x / tile + y / tile) % 9 + 1
   in
-  let (_, w) = shortest_path len risk (0, 0) (len - 1, len - 1) in w
+  shortest_path len risk (0, 0) (len - 1, len - 1)
 
 let convert_data (l : string list) : int array array =
   Array.of_list_map ~f:(fun l ->
