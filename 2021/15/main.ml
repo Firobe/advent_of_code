@@ -17,7 +17,7 @@ module Pair
     let sexp_of_t (a, b) = Sexp.List [A.sexp_of_t a; B.sexp_of_t b]
   end
   include O
-  include Comparable.Polymorphic_compare(O)
+  include Comparable.Make(O)
   include Comparator.Make(O)
 end
 
