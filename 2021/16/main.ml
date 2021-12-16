@@ -51,12 +51,9 @@ let rec solve2 p = match p.ptype with
   | Operator {id; packets} ->
     let values = List.map solve2 packets in
     let binary id a b =
-      let b = begin match id with
-        | 5 -> a > b
-        | 6 -> a < b
-        | 7 -> a = b
-        | _ -> failwith "Wrong operator"
-      end in if b then 1 else 0
+      let f = begin match id with
+          5 -> (>) | 6 -> (<) | 7 -> (=) | _ -> assert false
+      end in if f a b then 1 else 0
     in begin match id with
       | 0 -> List.fold_left (+) 0 values
       | 1 -> List.fold_left ( * ) 1 values
