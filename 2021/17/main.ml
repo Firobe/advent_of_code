@@ -8,9 +8,9 @@ let check_range ~min ~max v =
 let find_inside_steps ~f ~min ~max v_0 =
   let rec aux k =
     match check_range ~min ~max (f ~v_0 k) with
-    | `Under -> aux (k + 1)
-    | `Over -> []
+    | `Under when k > v_0 -> []
     | `Inside -> k :: aux (k + 1)
+    | _ -> aux (k + 1)
   in aux 0
 
 let x_is_possible ~valid_steps (x1, x2) x =
@@ -20,26 +20,28 @@ let x_is_possible ~valid_steps (x1, x2) x =
 
 let y_is_possible (x1, x2) (y1, y2) y =
   let valid_steps = find_inside_steps ~f:y_at ~min:y1 ~max:y2 y in
-  if List.is_empty valid_steps then false
-  else
+  if List.is_empty valid_steps then []
+  else(
     List.range 0 x2
-    |> List.exists ~f:(x_is_possible ~valid_steps (x1, x2))
+    |> List.filter ~f:(x_is_possible ~valid_steps (x1, x2))
+  )
 
-let find_best_y xrange yrange =
-  let rec go status n =
-    begin match status with
-    | `Searching -> Stdio.printf "Searching %d\n" n
-    | `In_range -> Stdio.printf "In range %d\n" n
-    end;
-    match status, y_is_possible xrange yrange n with
-    | `Searching, true -> go `In_range (n + 1)
-    | `Searching, false -> go `Searching (n + 1)
-    | `In_range, true -> go `In_range (n + 1)
-    | `In_range, false -> n - 1
-  in go `Searching 0 
+let find_all xrange yrange =
+  List.range (-1000) 1000
+  |> List.map ~f:(fun y ->
+      List.map (y_is_possible xrange yrange y) ~f:(fun x -> (x, y)))
+  |> List.concat
+  
+let solve1 (xrange, yrange) =
+  let all = find_all xrange yrange in
+  List.iter ~f:(fun (x, y) -> Stdio.printf "(%d,%d) " x y) all;
+  let (_, v_0) =
+    all |> List.max_elt ~compare:(fun (_,a) (_,b) -> compare a b)
+    |> Option.value_exn
+  in y_at ~v_0 v_0
 
-let solve1 (xrange, yrange) = find_best_y xrange yrange
-let solve2 _ = 0
+let solve2 (xrange, yrange) =
+  find_all xrange yrange |> List.length
 
 let convert_data (l : string list) : (int * int) * (int * int) =
   let s = List.hd_exn l in
