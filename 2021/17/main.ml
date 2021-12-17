@@ -21,10 +21,9 @@ let x_is_possible ~valid_steps (x1, x2) x =
 let y_is_possible (x1, x2) (y1, y2) y =
   let valid_steps = find_inside_steps ~f:y_at ~min:y1 ~max:y2 y in
   if List.is_empty valid_steps then []
-  else(
-    List.range 0 x2
+  else
+    List.range 0 (x2 + 1)
     |> List.filter ~f:(x_is_possible ~valid_steps (x1, x2))
-  )
 
 let find_all xrange yrange =
   List.range (-1000) 1000
@@ -33,10 +32,9 @@ let find_all xrange yrange =
   |> List.concat
   
 let solve1 (xrange, yrange) =
-  let all = find_all xrange yrange in
-  List.iter ~f:(fun (x, y) -> Stdio.printf "(%d,%d) " x y) all;
   let (_, v_0) =
-    all |> List.max_elt ~compare:(fun (_,a) (_,b) -> compare a b)
+    find_all xrange yrange
+    |> List.max_elt ~compare:(fun (_,a) (_,b) -> compare a b)
     |> Option.value_exn
   in y_at ~v_0 v_0
 
