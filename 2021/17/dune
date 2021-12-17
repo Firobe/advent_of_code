@@ -1,0 +1,5 @@
+(executable
+ (name main)
+ (libraries base stdio zarith psq bitstring hex)
+ (preprocess (pps ppx_bitstring))
+ )
