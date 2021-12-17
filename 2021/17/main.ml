@@ -18,7 +18,7 @@ let x_is_possible ~valid_steps (x1, x2) x =
       Poly.(check_range ~min:x1 ~max:x2 (x_at ~v_0:x k) = `Inside)
     )
 
-let y_is_possible (x1, x2) (y1, y2) y =
+let all_x_for_y (x1, x2) (y1, y2) y =
   let valid_steps = find_inside_steps ~f:y_at ~min:y1 ~max:y2 y in
   if List.is_empty valid_steps then []
   else
@@ -28,7 +28,7 @@ let y_is_possible (x1, x2) (y1, y2) y =
 let find_all xrange yrange =
   List.range (-1000) 1000
   |> List.map ~f:(fun y ->
-      List.map (y_is_possible xrange yrange y) ~f:(fun x -> (x, y)))
+      List.map (all_x_for_y xrange yrange y) ~f:(fun x -> (x, y)))
   |> List.concat
   
 let solve1 (xrange, yrange) =
