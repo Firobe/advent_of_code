@@ -10,7 +10,7 @@ let image_boundaries (i : image) : Coord.t * Coord.t =
   let xmin, _ = Set.min_elt_exn i.d in
   let ymin, ymax = Set.fold i.d ~init:(Int.max_value, Int.min_value)
       ~f:(fun (ymin, ymax) (_, y) -> (Int.min ymin y, Int.max ymax y)) in
-  (xmin - 5, xmax + 5), (ymin - 5, ymax + 5)
+  (xmin - 1, xmax + 1), (ymin - 1, ymax + 1)
 
 let get_neighbor_coords (x, y) : Coord.t list =
   [(-1, -1); (0, -1) ; (1, -1) ;
@@ -19,11 +19,10 @@ let get_neighbor_coords (x, y) : Coord.t list =
   |> List.map ~f:(fun (dx, dy) -> (x + dx, y + dy))
 
 let get_index (i : image) (p : Coord.t) : int =
-  let n = get_neighbor_coords p
-          |> List.map ~f:(fun p -> Bool.(Set.mem i.d p <> i.negative))
-          |> List.map ~f:(fun x -> if x then '1' else '0')
-          |> String.of_char_list
-  in Int.of_string @@ "0b" ^ n
+  get_neighbor_coords p
+  |> List.fold ~init:0 ~f:(fun sum p ->
+      (sum lsl 1) lor (if Bool.(Set.mem i.d p <> i.negative) then 1 else 0)
+    )
 
 let step (a : bool array) (i : image) : image =
   let negative = Bool.(a.(0) <> i.negative) in
