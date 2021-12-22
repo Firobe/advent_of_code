@@ -11,18 +11,6 @@ let intersections zone x =
 let add_cuboid (zone, volume) added =
   let volume', to_add =
     intersections zone added
-    |> Sequence.fold ~init:(volume +. Box3.volume added, [])
-      ~f:(fun (volume, nc) inter -> match inter.kind with
-          | `Full ->
-            (volume -. Box3.volume inter.box, {kind = `Negative; box = inter.box} :: nc)
-          | `Negative ->
-            (volume +. Box3.volume inter.box, {kind = `Full; box = inter.box} :: nc)
-        )
-  in ({kind = `Full; box = added} :: to_add @ zone, volume')
-
-let remove_cuboid (zone, volume) removed =
-  let volume', to_add =
-    intersections zone removed 
     |> Sequence.fold ~init:(volume, [])
       ~f:(fun (volume, nc) inter -> match inter.kind with
           | `Full ->
@@ -34,8 +22,9 @@ let remove_cuboid (zone, volume) removed =
 
 let total_volume l = 
   let (_, v) = List.fold l ~init:([], 0.) ~f:(fun (zone, volume) (k, b) ->
-      let f = if k then add_cuboid else remove_cuboid in
-      f (zone, volume) b
+      let zone, volume = add_cuboid (zone, volume) b in
+      if k then ({kind = `Full; box = b} :: zone, volume +. Box3.volume b)
+      else (zone, volume)
     )
   in v |> Float.round |> Int.of_float
 
