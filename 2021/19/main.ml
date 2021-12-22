@@ -2,7 +2,7 @@ open Gg
 open Base
 module Format = Caml.Format
 
-(* Big ugly bruteforce *)
+(* Big ugly bruteforce, but nice progress bars! *)
 
 let equal_f_eps x y =
   let eps = 0.00001 in
@@ -23,15 +23,17 @@ let all_transformations =
       M4.rot3_zyx (V3.v x y z)
     )
   |> List.dedup_and_sort ~compare:(M4.compare_f compare_f_eps)
+  |> Sequence.of_list
 
 let trans_vecs t = List.map ~f:(fun vec -> V3.tr t vec)
 
 let all_transformations s =
-  all_transformations |> List.map ~f:(fun m -> trans_vecs m s)
+  all_transformations |> Sequence.map ~f:(fun m -> trans_vecs m s)
 
+let sol = Sequence.of_list
 let all_translations area scanner =
-  List.cartesian_product area scanner
-  |> List.map ~f:(fun (dest, orig) ->
+  Sequence.cartesian_product (sol area) (sol scanner)
+  |> Sequence.map ~f:(fun (dest, orig) ->
       let delta = V3.sub dest orig in
       (List.map scanner ~f:(fun p -> V3.add p delta),
        delta)
@@ -48,29 +50,40 @@ let matches area (candidate, origin) =
 
 let find_match area scanner =
   all_transformations scanner
-  |> List.map ~f:(all_translations area)
-  |> List.concat
-  |> List.find ~f:(matches area)
+  |> Sequence.map ~f:(all_translations area)
+  |> Sequence.concat
+  |> Sequence.find ~f:(matches area)
 
 let merge area candidate =
   List.concat [area; candidate]
   |> List.dedup_and_sort ~compare:(V3.compare_f compare_f_eps)
 
-let rec add_to_area area origs = function
-  | [] -> (area, origs)
-  | scanner :: t ->
-    match find_match area scanner with
-    | None -> add_to_area area origs (t @ [scanner])
-    | Some (s, o) -> add_to_area (merge area s) (o :: origs) t
+let bar ~total = Progress.Line.(list [ 
+    spinner ();
+    elapsed ();
+    bar ~style:`UTF8 ~width:(`Fixed 50) ~color:Terminal.Color.(hex "#FA0") total;
+    count_to total
+  ])
+
+let search_report area origs to_add f = 
+  let rec add_to_area area origs = function
+    | [] -> (area, origs)
+    | scanner :: t ->
+      match find_match area scanner with
+      | None -> f 0; add_to_area area origs (t @ [scanner])
+      | Some (s, o) -> f 1; add_to_area (merge area s) (o :: origs) t
+  in f 1; add_to_area area origs to_add
 
 let make_area l = match l with
-  | h :: t -> add_to_area h [V3.v 0. 0. 0.] t
+  | h :: t ->
+    let config = Progress.Config.(v ~persistent:false ()) in
+    Progress.with_reporter ~config (bar ~total:(List.length l))
+    (search_report h [V3.v 0. 0. 0.] t)
   | _ -> assert false
 
-let solve1 l = let (area, _) = make_area l in List.length area
+let solve1 (area, _) = List.length area
 
-let solve2 l =
-  let (_, origs) = make_area l in
+let solve2 (_, origs) =
   List.cartesian_product origs origs
   |> List.map ~f:(fun (x, y) ->
       V3.sub x y |> V3.map Float.abs |> V3.fold Float.add 0.
@@ -79,7 +92,7 @@ let solve2 l =
   |> Option.value_exn
   |> Float.round_nearest |> Float.to_int
 
-let convert_data (l : string list) : v3 list list =
+let convert_data (l : string list) =
   let parse_point s =
     let c = Float.of_int in
     Caml.Scanf.sscanf s "%d,%d,%d" (fun x y z -> V3.v (c x) (c y) (c z))
@@ -90,6 +103,7 @@ let convert_data (l : string list) : v3 list list =
   in
   List.group l ~break:(fun x _ -> String.is_empty x)
   |> List.map ~f:parse_scanner
+  |> make_area
 
 let main file =
   let input = Stdio.In_channel.read_lines file |> convert_data in
