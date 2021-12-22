@@ -2,38 +2,37 @@ open Base
 open Gg
 
 type cuboid = {box: box3; kind: [`Full | `Negative]}
+let rev = function `Full -> `Negative | `Negative -> `Full
+let apply = function `Full -> Fn.id | `Negative -> fun x -> (-. x)
 
 let intersections zone x =
   Sequence.of_list zone
   |> Sequence.map ~f:(fun c -> {c with box = Box3.inter c.box x})
   |> Sequence.filter ~f:(fun {box; _} -> not @@ Box3.is_empty box)
 
-let add_cuboid (zone, volume) added =
-  let volume', to_add =
-    intersections zone added
-    |> Sequence.fold ~init:(volume, [])
-      ~f:(fun (volume, nc) inter -> match inter.kind with
-          | `Full ->
-            (volume -. Box3.volume inter.box, {kind = `Negative; box = inter.box} :: nc)
-          | `Negative ->
-            (volume +. Box3.volume inter.box, {kind = `Full; box = inter.box} :: nc)
-        )
-  in (to_add @ zone, volume')
+let add_cuboid zone added =
+  (intersections zone added
+   |> Sequence.map ~f:(fun c -> {c with kind = rev c.kind})
+   |> Sequence.to_list
+  ) @ zone
 
-let total_volume l = 
-  let (_, v) = List.fold l ~init:([], 0.) ~f:(fun (zone, volume) (k, b) ->
-      let zone, volume = add_cuboid (zone, volume) b in
-      if k then ({kind = `Full; box = b} :: zone, volume +. Box3.volume b)
-      else (zone, volume)
+let total_volume zone =
+  List.sum (module Base.Float) zone
+    ~f:(fun {box; kind} -> apply kind (Box3.volume box))
+
+let make_area l = 
+  let z = List.fold l ~init:[] ~f:(fun zone (k, b) ->
+      let zone = add_cuboid zone b in
+      if k then {kind = `Full; box = b} :: zone else zone
     )
-  in v |> Float.round |> Int.of_float
+  in total_volume z |> Float.round |> Int.of_float
 
 let solve1 l =
   let init_cube = Box3.v (P3.v (-51.) (-51.) (-51.)) (Size3.v 102. 102. 102.) in
   List.filter l ~f:(fun (_, b) -> Box3.subset b init_cube)
-  |> total_volume
+  |> make_area 
 
-let solve2 = total_volume
+let solve2 = make_area
 
 let convert_data (l : string list) =
   let c = Int.to_float in
