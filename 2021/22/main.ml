@@ -1,38 +1,41 @@
-open Base
 open Gg
+open Base
 
-type cuboid = {box: box3; kind: [`Full | `Negative]}
-let rev = function `Full -> `Negative | `Negative -> `Full
-let apply = function `Full -> Fn.id | `Negative -> fun x -> (-. x)
+module Cuboid = struct
+  type t = {box: box3; kind: [`Full | `Negative]}
 
-let intersections zone x =
-  Sequence.of_list zone
-  |> Sequence.map ~f:(fun c -> {c with box = Box3.inter c.box x})
-  |> Sequence.filter ~f:(fun {box; _} -> not @@ Box3.is_empty box)
+  let create box = {kind = `Full; box}
 
-let add_cuboid zone added =
-  (intersections zone added
-   |> Sequence.map ~f:(fun c -> {c with kind = rev c.kind})
-   |> Sequence.to_list
-  ) @ zone
+  let reverse x =
+    {x with kind = match x.kind with `Full -> `Negative | _ -> `Full}
 
-let total_volume zone =
-  List.sum (module Base.Float) zone
-    ~f:(fun {box; kind} -> apply kind (Box3.volume box))
+  let volume {box; kind} = match kind with
+    | `Full -> Box3.volume box
+    | `Negative -> -. (Box3.volume box)
 
-let make_area l = 
-  let z = List.fold l ~init:[] ~f:(fun zone (k, b) ->
-      let zone = add_cuboid zone b in
-      if k then {kind = `Full; box = b} :: zone else zone
+  let intersections zone x =
+    Sequence.of_list zone
+    |> Sequence.map ~f:(fun c -> {c with box = Box3.inter c.box x})
+    |> Sequence.filter ~f:(fun {box; _} -> not @@ Box3.is_empty box)
+
+  let place zone x =
+    (intersections zone x |> Sequence.map ~f:reverse |> Sequence.to_list) @ zone
+end
+
+let total_volume zone = List.sum (module Float) zone ~f:Cuboid.volume
+
+let make_zone l = 
+  List.fold l ~init:[] ~f:(fun zone (turn_on, box) ->
+      let zone = Cuboid.place zone box in
+      if turn_on then (Cuboid.create box) :: zone else zone
     )
-  in total_volume z |> Float.round |> Int.of_float
+  |> total_volume |> Float.round |> Int.of_float
 
 let solve1 l =
   let init_cube = Box3.v (P3.v (-51.) (-51.) (-51.)) (Size3.v 102. 102. 102.) in
-  List.filter l ~f:(fun (_, b) -> Box3.subset b init_cube)
-  |> make_area 
+  List.filter l ~f:(fun (_, b) -> Box3.subset b init_cube) |> make_zone
 
-let solve2 = make_area
+let solve2 = make_zone
 
 let convert_data (l : string list) =
   let c = Int.to_float in
