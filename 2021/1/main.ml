@@ -1,3 +1,5 @@
+let a = 0
+
 let solve1 l =
   let r, _ = List.fold_left (fun (sum, last) current -> match last with
       | None -> (sum, Some current)
