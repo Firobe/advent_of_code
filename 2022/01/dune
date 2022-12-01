@@ -1,5 +1,5 @@
 (executable
   (name aoc)
   (preprocess (pps ppx_show))
-  (libraries angstrom stdio ppx_show.runtime)
+  (libraries aoclib angstrom ppx_show.runtime)
   )

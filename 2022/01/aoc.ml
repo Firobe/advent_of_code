@@ -1,30 +1,20 @@
-type calory = int
-[@@deriving show]
+open Aoclib
 
-type elve = calory list
-[@@deriving show]
+module Types = struct
+  type input = int list list
+  [@@deriving show]
 
-type input = elve list
-[@@deriving show]
-
-type output = calory option
-[@@deriving show]
+  type output = int option
+  [@@deriving show]
+end
+include Types
 
 module Parsing = struct
   open Angstrom
-  let integer =
-    take_while1 (function '0' .. '9' -> true | _ -> false) >>| int_of_string
+  open Parsing
 
-  let calory = integer
-
-  let elve = sep_by end_of_line calory
-
-  let input : input t = sep_by end_of_line elve
-
-  let go str =
-    match parse_string ~consume:All input str with
-    | Ok v -> v
-    | Error msg -> failwith msg
+  let input =
+    sep_by end_of_line (sep_by end_of_line integer)
 end
 
 module Solving = struct
@@ -44,15 +34,6 @@ module Solving = struct
     |> Option.some
 end
 
-let go file =
-  Format.printf "%s@.%!" file;
-  let input = Stdio.In_channel.read_all file |> Parsing.go in
-  let o1 = Solving.part1 input in
-  let o2 = Solving.part2 input in
-  Format.printf "Part 1: %a@.%!" pp_output o1;
-  Format.printf "Part 2: %a@.%!" pp_output o2
+module Today = MakeDay(Types)(Parsing)(Solving)
 
-let _ =
-  go "example";
-  go "input"
-
+let () = Today.run_all
