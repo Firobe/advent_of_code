@@ -1,6 +1,7 @@
 module type Types = sig
   type input
   type output
+  val pp_input : Format.formatter -> input -> unit
   val pp_output : Format.formatter -> output -> unit
 end
 module type Parsing = sig
@@ -27,7 +28,7 @@ module MakeDay
     (S : Solving with type input := T.input and type output := T.output) =
 struct
 
-  let go file =
+  let go ?(debug=false) file =
     Format.printf "%s@.%!" file;
     let do_parse str = 
       let open Angstrom in
@@ -38,8 +39,11 @@ struct
     let input = Stdio.In_channel.read_all file |> do_parse in
     let o1 = S.part1 input in
     let o2 = S.part2 input in
+    if debug then (
+      Format.printf "Parsed:@[%a@]@.%!" T.pp_input input
+    );
     Format.printf "Part 1: %a@.%!" T.pp_output o1;
     Format.printf "Part 2: %a@.%!" T.pp_output o2
 
-  let run_all = go "example"; go "input"
+  let run_all ?debug () = go ?debug "example"; go "input"
 end

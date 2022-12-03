@@ -14,7 +14,8 @@ module Parsing = struct
   open Parsing
 
   let input =
-    sep_by end_of_line (sep_by end_of_line integer)
+    sep_by end_of_line (many (integer <* end_of_line))
+
 end
 
 module Solving = struct
@@ -36,4 +37,4 @@ end
 
 module Today = MakeDay(Types)(Parsing)(Solving)
 
-let () = Today.run_all
+let () = Today.run_all ~debug:true ()

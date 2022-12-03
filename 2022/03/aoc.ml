@@ -1,13 +1,22 @@
 open Aoclib
 
-module CBag = Bag.Make (struct 
-    type t = char
-    let compare = Char.compare
-  end)
+module CBag = struct
+  include Bag.Make (struct 
+      type t = char
+      let compare = Char.compare
+    end)
+  let pp fmt t =
+    let open Format in
+    pp_print_string fmt "{";
+    iter (fun c i -> fprintf fmt "%c:%d@ " c i) t;
+    pp_print_string fmt "}"
+end
 
 module Types = struct
   type bag = {left: CBag.t; right: CBag.t}
+  [@@deriving show]
   type input = bag list
+  [@@deriving show]
 
   type output = int
   [@@deriving show]
@@ -63,4 +72,4 @@ end
 
 module Today = MakeDay(Types)(Parsing)(Solving)
 
-let () = Today.run_all
+let () = Today.run_all ~debug:true ()
