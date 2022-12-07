@@ -45,26 +45,15 @@ end
 module Solving = struct
   open Base
 
+  (* children are unordered *)
   type 'a tree = { label : 'a; children : 'a tree list }
-  [@@deriving show { with_path = false }]
-
-  type 'a path =
-    | Root
-    | Down of {
-        path : 'a path;
-        label : 'a;
-        left_trees : 'a tree list;
-        right_trees : 'a tree list;
-      }
-  [@@deriving show { with_path = false }]
-
-  type zip = label tree * label path [@@deriving show { with_path = false }]
+  type 'a path = Root | Down of 'a path * 'a tree
 
   let go_up (t, p) =
     match p with
     | Root -> None
-    | Down { path; label; left_trees; right_trees } ->
-        Some ({ label; children = left_trees @ [ t ] @ right_trees }, path)
+    | Down (path, parent) ->
+        Some ({ parent with children = t :: parent.children }, path)
 
   let go_child (t, p) name =
     match
@@ -72,9 +61,8 @@ module Solving = struct
     with
     | None -> failwith "No child with given name"
     | Some (n, subtree) ->
-        let left_trees = List.take t.children n in
-        let _, right_trees = List.split_n t.children (n + 1) in
-        (subtree, Down { path = p; left_trees; right_trees; label = t.label })
+        let children = List.filteri t.children ~f:(fun i _ -> i <> n) in
+        (subtree, Down (p, { t with children }))
 
   let rec go_root (t, p) =
     match go_up (t, p) with Some (t, p) -> go_root (t, p) | None -> (t, p)
