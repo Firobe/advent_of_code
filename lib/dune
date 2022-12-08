@@ -1,3 +1,3 @@
 (library
  (name aoclib)
- (libraries angstrom stdio))
+ (libraries angstrom stdio unix))
