@@ -80,7 +80,6 @@ module Solving = struct
   let simulate_rope rope moves =
     let f (s, rope) dir =
       let rope' = full_step dir rope in
-      let s = Set.add s (List.last_exn rope) in
       (Set.add s (List.last_exn rope'), rope')
     in
     flatten moves |> List.fold ~init:(Set.empty (module Coord), rope) ~f
