@@ -60,10 +60,10 @@ module Solving = struct
   let step (head, tail) =
     let dx = head.x - tail.x in
     let dy = head.y - tail.y in
-    let clamp1 d = if d < -1 then -1 else if d > 1 then 1 else d in
+    let clamp1 = Int.clamp_exn ~min:(-1) ~max:1 in
     let tail =
-      let adjust () = { x = tail.x + clamp1 dx; y = tail.y + clamp1 dy } in
-      if abs dx >= 2 || abs dy >= 2 then adjust () else tail
+      let adjusted = { x = tail.x + clamp1 dx; y = tail.y + clamp1 dy } in
+      if abs dx >= 2 || abs dy >= 2 then adjusted else tail
     in
     tail
 
