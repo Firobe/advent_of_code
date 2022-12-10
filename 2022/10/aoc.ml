@@ -59,15 +59,13 @@ module Solving = struct
 
   let visible (cycle, x) =
     let drawn = (cycle - 1) % 40 in
-    x - 1 <= drawn && drawn <= x + 1
+    if x - 1 <= drawn && drawn <= x + 1 then '#' else ' '
 
   let part2 (input : input) : output =
     exec_seq input |> Sequence.map ~f:visible
     |> Fn.flip Sequence.chunks_exn 40
-    |> Sequence.iter ~f:(fun l ->
-           List.iter l ~f:(fun b ->
-               Stdlib.Printf.printf "%c" (if b then '#' else ' '));
-           Stdlib.Printf.printf "\n");
+    |> Sequence.map ~f:String.of_char_list
+    |> Sequence.iter ~f:(Stdlib.Printf.printf "%s\n");
     0
 end
 
