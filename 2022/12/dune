@@ -1,0 +1,5 @@
+(executable
+ (name aoc)
+ (preprocess
+  (pps ppx_show ppx_deriving.ord ppx_deriving_hash ppx_deriving.eq))
+ (libraries aoclib angstrom ppx_show.runtime ocamlgraph))
