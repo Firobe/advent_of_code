@@ -25,6 +25,12 @@ module Parsing = struct
 
   let integer =
     take_while1 (function '0' .. '9' -> true | _ -> false) >>| int_of_string
+
+  let neg_integer =
+    lift2
+      (fun sign n -> if sign = '-' then -n else n)
+      (Angstrom.option '+' (char '-'))
+      integer
 end
 
 module MakeDay
