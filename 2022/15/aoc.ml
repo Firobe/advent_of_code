@@ -67,10 +67,11 @@ module Solving = struct
     let max = if List.length input > 14 then 4000000 else 20 in
     let possible_set = D.add (D.Interval.make 0 max) D.empty in
     let y, s =
-      List.range 0 (max + 1)
-      |> List.map ~f:(fun y -> compute_interval_set ~y input)
-      |> List.map ~f:(restrict possible_set)
-      |> List.findi_exn ~f:(fun _ s -> D.cardinal s > 0)
+      Sequence.range 0 (max + 1)
+      |> Sequence.map ~f:(fun y -> compute_interval_set ~y input)
+      |> Sequence.map ~f:(restrict possible_set)
+      |> Sequence.mapi ~f:(fun i x -> (i, x))
+      |> Sequence.find_exn ~f:(fun (_, s) -> D.cardinal s > 0)
     in
     let x = D.choose s |> D.Interval.x in
     (x * 4000000) + y

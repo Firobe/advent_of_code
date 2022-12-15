@@ -1,5 +1,6 @@
 (executable
  (name aoc)
+ (ocamlopt_flags -O3)
  (preprocess
   (pps ppx_show))
  (libraries aoclib angstrom ppx_show.runtime diet))
