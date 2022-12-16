@@ -57,26 +57,7 @@ module Solving = struct
     in
     (set, flows)
 
-  let search input =
-    let distances = all_distances input in
-    let valves, flows = interesting_nodes input in
-    let rec aux time_left valves_left score pos =
-      if time_left < 0 then score
-      else
-        Set.map
-          (module Int)
-          valves_left
-          ~f:(fun next ->
-            let time = time_left - GJ.HVV.find distances (pos, next) - 1 in
-            let score = score + max 0 (time * Hashtbl.find_exn flows next) in
-            let left = Set.remove valves_left next in
-            aux time left score next)
-        |> Set.max_elt
-        |> Option.value ~default:score
-    in
-    aux 30 valves 0 "AA"
-
-  let search2 input =
+  let search input time pos2 =
     let distances = all_distances input in
     let valves, flows = interesting_nodes input in
     let rec aux time_left valves_left score (pos1, pos2) =
@@ -120,10 +101,10 @@ module Solving = struct
         | _, `At pos -> go_next pos `Right
         | `Stuck, `Stuck -> score
     in
-    aux 26 valves 0 (`At "AA", `At "AA")
+    aux time valves 0 (`At "AA", pos2)
 
-  let part1 (input : input) : output = search input
-  let part2 (input : input) : output = search2 input
+  let part1 (input : input) : output = search input 30 `Stuck
+  let part2 (input : input) : output = search input 26 (`At "AA")
 end
 
 module Today = MakeDay (Types) (Parsing) (Solving)
