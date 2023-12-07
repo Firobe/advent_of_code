@@ -17,37 +17,44 @@ end
 module Solving = struct
   open Base
 
-  let _dig1 x =
-    String.filter ~f:Char.is_digit x
-    |> String.to_list |> List.map ~f:Char.to_string
+  let part1 (_input : input) : output = 42
+  (* Fails on second example, so removed part 1 *)
 
-  let line_value f l =
-    let dig = f l in
-    let v = Int.of_string (List.hd_exn dig ^ List.last_exn dig) in
-    Stdio.printf "%s: %d\n" l v; v
-
-
-  let part1 (_input : input) : output = 69
-  (* Fails on first example *)
-  (* List.sum (module Int) ~f:(line_value dig1) input *)
+  let names =
+    [
+      "zero";
+      "one";
+      "two";
+      "three";
+      "four";
+      "five";
+      "six";
+      "seven";
+      "eight";
+      "nine";
+    ]
 
   let dig2 x =
-    let words =
-      [ "one"; "two"; "three"; "four"; "five"; "six"; "seven"; "eight"; "nine" ]
-      |> List.mapi ~f:(fun n name ->
-             Angstrom.(string name |> map ~f:(fun _ -> Int.to_string (n + 1))))
+    let open Angstrom in
+    let char_s = satisfy Char.is_digit |> map ~f:Char.to_string in
+    let scan f =
+      choice
+        (char_s
+        :: List.mapi names ~f:(fun n name ->
+               string (f name) |> map ~f:(fun _ -> Int.to_string n)))
     in
-    let char_s =
-      Angstrom.satisfy Char.is_digit |> Angstrom.map ~f:Char.to_string
+    let forward = scan Fn.id in
+    let backward = scan String.rev in
+    let all valid = sep_by (advance 1) (many valid) |> map ~f:List.concat in
+    let parse f s =
+      parse_string ~consume:Consume.All (all f) (s x)
+      |> Result.ok_or_failwith |> List.hd_exn
     in
-    let valid = Angstrom.choice (char_s :: words) in
-    let all =
-      Angstrom.(sep_by (advance 1) (many valid) |> map ~f:List.concat)
-    in
-    Angstrom.(parse_string ~consume:Consume.All all x) |> Result.ok_or_failwith
+    let first = parse forward Fn.id in
+    let last = parse backward String.rev in
+    Int.of_string (first ^ last)
 
-  let part2 (input : input) : output =
-    List.sum (module Int) ~f:(line_value dig2) input
+  let part2 (input : input) : output = List.sum (module Int) ~f:dig2 input
 end
 
 module Today = MakeDay (Types) (Parsing) (Solving)
